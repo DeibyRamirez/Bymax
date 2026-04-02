@@ -105,13 +105,14 @@ body {
   font-weight: 700;
 }
 
-#botones-respuesta {
+#respuesta-opciones {
   padding: 10px 12px 8px;
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-#botones-respuesta button,
+#respuesta-opciones button,
 .input-row button {
   border: 1px solid #4b5566;
   background: #2d333e;
@@ -123,7 +124,7 @@ body {
   cursor: pointer;
 }
 
-#botones-respuesta button:hover {
+#respuesta-opciones button:hover {
   border-color: var(--teal);
   color: var(--teal-soft);
 }

@@ -21,12 +21,28 @@ VALORES_ES = {'Yes': 'Sí', 'No': 'No'}
 # Columnas que son síntomas (Yes/No)
 SINTOMAS = ['Fiebre', 'Tos', 'Fatiga', 'Dificultad al respirar']
 
+DATOS_PERFIL = ['Edad', 'Género']
+
 # Preguntas que Baymax le hace al usuario por cada síntoma
 PREGUNTAS = {
     'Fiebre':                  '¿Tienes fiebre?',
     'Tos':                     '¿Tienes tos?',
     'Fatiga':                  '¿Sientes fatiga o cansancio inusual?',
     'Dificultad al respirar':  '¿Tienes dificultad para respirar?'
+}
+
+PREGUNTAS_PERFIL = {
+    'Edad': '¿Cuál es tu edad en años?',
+    'Género': '¿Cuál es tu género? (Masculino/Femenino)'
+}
+
+MAPEO_GENERO = {
+    'masculino': 'Male',
+    'hombre': 'Male',
+    'male': 'Male',
+    'femenino': 'Female',
+    'mujer': 'Female',
+    'female': 'Female'
 }
 
 

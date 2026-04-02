@@ -19,9 +19,19 @@
 
     <div id="mensajes"></div>
 
-    <div id="botones-respuesta">
-      <button onclick="responder('Sí')">Sí</button>
-      <button onclick="responder('No')">No</button>
+    <div id="respuesta-opciones"></div>
+
+    <form id="respuesta-texto" class="input-row" autocomplete="off">
+      <input id="input-valor" type="text" placeholder="Escribe tu respuesta..." />
+      <button type="submit">Enviar</button>
+    </form>
+
+    <div class="sugerencias" id="sugerencias">
+      <span>Edad</span>
+      <span>Género</span>
+      <span>Fiebre</span>
+      <span>Tos</span>
+      <span>Fatiga</span>
     </div>
 
   </section>
@@ -30,7 +40,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="diagnostico">Diagnóstico</button>
       <button class="tab" data-tab="sintomas">Síntomas</button>
-      
+      <button class="tab" data-tab="perfil">Perfil</button>
     </nav>
 
     <div class="tab-content active" id="tab-diagnostico">
@@ -49,45 +59,76 @@
       <img id="grafica-sintomas" style="display:none" alt="Gráfica de frecuencia de síntomas" />
     </div>
 
-    
+    <div class="tab-content" id="tab-perfil">
+      <h2>Perfil del paciente</h2>
+      <div class="perfil-grid">
+        <span>Edad reportada</span><strong id="perfil-edad">No especificada</strong>
+        <span>Género reportado</span><strong id="perfil-genero">No especificado</strong>
+      </div>
+      <div class="nota" id="nota-perfil">Se actualizará en vivo según tus respuestas.</div>
+    </div>
   </section>
 
   <script>
     let sessionId = null;
-    let sintomaActual = null;
-    const respuestasUsuario = {};
+    let campoActual = null;
+    let tipoActual = 'opciones';
+    let opcionesActuales = [];
+
+    const formTexto = document.getElementById('respuesta-texto');
+    const inputValor = document.getElementById('input-valor');
+    const contenedorOpciones = document.getElementById('respuesta-opciones');
 
     window.onload = async () => {
       const res = await fetch('/iniciar', { method: 'POST' });
       const data = await res.json();
       sessionId = data.session_id;
-      sintomaActual = data.sintoma;
       agregarMensaje('baymax', data.mensaje);
       agregarMensaje('baymax', data.pregunta);
+      campoActual = data.campo;
+      tipoActual = data.tipo;
+      opcionesActuales = data.opciones || [];
       activarTabs();
-      actualizarChips();
+      prepararEntrada();
+      actualizarPanelEnVivo(data.estado || {});
+      setInterval(refrescarEstado, 5000);
     };
+
+    formTexto.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (tipoActual !== 'texto') {
+        return;
+      }
+      const valor = inputValor.value.trim();
+      if (!valor) {
+        return;
+      }
+      responder(valor);
+      inputValor.value = '';
+    });
 
     async function responder(valor) {
       agregarMensaje('usuario', valor);
-      respuestasUsuario[sintomaActual] = valor;
-      actualizarChips();
 
       const res = await fetch('/responder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sessionId,
-          sintoma: sintomaActual,
+          campo: campoActual,
           valor: valor
         })
       });
 
       const data = await res.json();
       agregarMensaje('baymax', data.mensaje);
+      actualizarPanelEnVivo(data.estado || {});
 
       if (data.accion === 'pregunta') {
-        sintomaActual = data.sintoma;
+        campoActual = data.campo;
+        tipoActual = data.tipo;
+        opcionesActuales = data.opciones || [];
+        prepararEntrada();
         agregarMensaje('baymax', data.pregunta);
       } else if (data.accion === 'diagnostico') {
         document.getElementById('diagnostico-texto').innerHTML = data.mensaje;
@@ -95,9 +136,23 @@
         mostrarGrafica('grafica-diagnosticos', data.grafica_diag);
         mostrarGrafica('grafica-sintomas', data.grafica_sint);
         mostrarGrafica('grafica-enfermedades', data.grafica_enf);
-        document.getElementById('botones-respuesta').style.display = 'none';
-        document.getElementById('sugerencias').style.display = 'none';
-        document.querySelector('.input-row').style.opacity = '0.6';
+        contenedorOpciones.style.display = 'none';
+        formTexto.style.display = 'none';
+      }
+    }
+
+    async function refrescarEstado() {
+      if (!sessionId) {
+        return;
+      }
+      const res = await fetch('/estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        actualizarPanelEnVivo(data.estado || {});
       }
     }
 
@@ -116,6 +171,29 @@
       img.style.display = 'block';
     }
 
+    function prepararEntrada() {
+      contenedorOpciones.innerHTML = '';
+
+      if (tipoActual === 'texto') {
+        formTexto.style.display = 'grid';
+        contenedorOpciones.style.display = 'none';
+        inputValor.placeholder = campoActual === 'Edad'
+          ? 'Ejemplo: 29'
+          : 'Escribe tu respuesta...';
+        return;
+      }
+
+      formTexto.style.display = 'none';
+      contenedorOpciones.style.display = 'flex';
+      opcionesActuales.forEach((opcion) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = opcion;
+        button.addEventListener('click', () => responder(opcion));
+        contenedorOpciones.appendChild(button);
+      });
+    }
+
     function activarTabs() {
       const tabs = document.querySelectorAll('.tab');
       tabs.forEach((tab) => {
@@ -131,10 +209,10 @@
       });
     }
 
-    function actualizarChips() {
+    function actualizarChips(sintomas = {}) {
       const chips = document.getElementById('chips-sintomas');
       chips.innerHTML = '';
-      const activos = Object.entries(respuestasUsuario).filter(([, valor]) => valor === 'Sí');
+      const activos = Object.entries(sintomas).filter(([, valor]) => valor === 'Sí');
 
       if (!activos.length) {
         chips.innerHTML = '<span class="chip">Aún sin síntomas confirmados</span>';
@@ -149,9 +227,36 @@
       });
     }
 
+    function actualizarPanelEnVivo(estado) {
+      const sintomas = estado.sintomas || {};
+      const perfil = estado.perfil || {};
+      const candidatos = estado.candidatos || {};
+
+      actualizarChips(sintomas);
+      llenarFrecuencias(candidatos);
+
+      document.getElementById('perfil-edad').textContent =
+        perfil.Edad !== null && perfil.Edad !== undefined ? `${perfil.Edad} años` : 'No especificada';
+
+      const genero = perfil['Género'];
+      document.getElementById('perfil-genero').textContent =
+        genero === 'Male' ? 'Masculino' : genero === 'Female' ? 'Femenino' : 'No especificado';
+
+      const top = Object.entries(candidatos)[0];
+      if (top) {
+        document.getElementById('nota-perfil').textContent =
+          `Resultado líder actual: ${top[0]} (${top[1]}%).`;
+      }
+    }
+
     function llenarFrecuencias(candidatos) {
       const lista = document.getElementById('lista-frecuencias');
       lista.innerHTML = '';
+
+      if (!Object.keys(candidatos).length) {
+        lista.innerHTML = '<span class="chip">Aún sin candidatos calculados</span>';
+        return;
+      }
 
       Object.entries(candidatos).forEach(([nombre, valor]) => {
         const fila = document.createElement('div');
