@@ -1,0 +1,86 @@
+<!-- templates/index.html — Programador 2 -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Baymax — Asistente médico</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* P2: aquí va todo el CSS del diseño que ya vimos */
+  </style>
+</head>
+<body>
+
+  <!-- Panel izquierdo: chat -->
+  <div id="chat-panel">
+    <div id="mensajes"></div>
+    <div id="botones-respuesta">
+      <button onclick="responder('Sí')">Sí</button>
+      <button onclick="responder('No')">No</button>
+    </div>
+  </div>
+
+  <!-- Panel derecho: gráficas -->
+  <div id="graficas-panel">
+    <img id="grafica-diagnosticos" style="display:none"/>
+    <img id="grafica-sintomas"     style="display:none"/>
+    <img id="grafica-enfermedades" style="display:none"/>
+  </div>
+
+  <script>
+    let sessionId  = null;
+    let sintomaActual = null;
+
+    // Al cargar la página, inicia la sesión
+    window.onload = async () => {
+      const res  = await fetch('/iniciar', {method:'POST'});
+      const data = await res.json();
+      sessionId     = data.session_id;
+      sintomaActual = data.sintoma;
+      agregarMensaje('baymax', data.mensaje);
+      agregarMensaje('baymax', data.pregunta);
+    };
+
+    async function responder(valor) {
+      agregarMensaje('usuario', valor);
+
+      const res = await fetch('/responder', {
+        method:  'POST',
+        headers: {'Content-Type': 'application/json'},
+        body:    JSON.stringify({
+          session_id: sessionId,
+          sintoma:    sintomaActual,
+          valor:      valor
+        })
+      });
+      const data = await res.json();
+      agregarMensaje('baymax', data.mensaje);
+
+      if (data.accion === 'pregunta') {
+        sintomaActual = data.sintoma;
+        agregarMensaje('baymax', data.pregunta);
+
+      } else if (data.accion === 'diagnostico') {
+        // Muestra las gráficas
+        mostrarGrafica('grafica-diagnosticos', data.grafica_diag);
+        mostrarGrafica('grafica-sintomas',     data.grafica_sint);
+        mostrarGrafica('grafica-enfermedades', data.grafica_enf);
+        document.getElementById('botones-respuesta').style.display = 'none';
+      }
+    }
+
+    function agregarMensaje(rol, texto) {
+      const div  = document.createElement('div');
+      div.className = 'mensaje ' + rol;
+      div.innerHTML = texto;
+      document.getElementById('mensajes').appendChild(div);
+    }
+
+    function mostrarGrafica(id, base64) {
+      const img = document.getElementById(id);
+      img.src   = 'data:image/png;base64,' + base64;
+      img.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 # main.py
-from baymax_agent import BaymaxAgent
+from bymax_agente import BaymaxAgent
 from datos import PREGUNTAS
 
 def limpiar_pantalla():
