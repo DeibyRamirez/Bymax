@@ -1,10 +1,10 @@
 # baymax_agent.py
-from datos import cargar_dataset, SINTOMAS, PREGUNTAS
+from src.datos import cargar_dataset, SINTOMAS, PREGUNTAS
 
 class BaymaxAgent:
 
     def __init__(self):
-        self.df = cargar_dataset()
+        self.df = cargar_dataset('data/Disease_symptom_and_patient_profile_dataset.csv')
         self.estado = 'ESCUCHANDO'
         self.sintomas_usuario = {}   # {'Fiebre': 'Sí', 'Tos': 'No', ...}
         self.candidatos = {}         # {'Influenza': 0.82, 'COVID-19': 0.41, ...}

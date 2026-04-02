@@ -1,6 +1,6 @@
 # analisis.py
 import pandas as pd
-from datos import cargar_dataset, SINTOMAS
+from src.datos import cargar_dataset, SINTOMAS
 
 def resumen_general(df):
     """Estadísticas clave del dataset completo."""

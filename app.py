@@ -1,8 +1,8 @@
 # app.py  — Programador 1
 from flask import Flask, render_template, request, jsonify, session
-from bymax_agente import BaymaxAgent
-from visualizacion import grafica_diagnosticos, grafica_sintomas, grafica_enfermedades
-from datos import cargar_dataset, PREGUNTAS, SINTOMAS
+from src.bymax_agente import BaymaxAgent
+from src.visualizacion import grafica_diagnosticos, grafica_sintomas, grafica_enfermedades
+from src.datos import cargar_dataset, PREGUNTAS, SINTOMAS
 import uuid
 
 app = Flask(__name__)
@@ -51,7 +51,7 @@ def responder():
     decision = agente.decidir()
 
     if decision == 'DIAGNOSTICAR':
-        df = cargar_dataset()
+        df = cargar_dataset('data/Disease_symptom_and_patient_profile_dataset.csv')
         return jsonify({
             'accion':       'diagnostico',
             'mensaje':      agente.diagnostico_texto(),

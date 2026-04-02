@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')   # necesario para Flask (sin ventana gráfica)
 import io, base64
-from analisis import frecuencia_sintomas, top_enfermedades
+from src.analisis import frecuencia_sintomas, top_enfermedades
 
 VERDE_BAYMAX = '#1D9E75'
 COLORES      = ['#1D9E75','#5DCAA5','#9FE1CB','#C0DD97','#D3D1C7']

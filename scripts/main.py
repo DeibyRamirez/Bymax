@@ -1,6 +1,6 @@
 # main.py
-from bymax_agente import BaymaxAgent
-from datos import PREGUNTAS
+from src.bymax_agente import BaymaxAgent
+from src.datos import PREGUNTAS
 
 def limpiar_pantalla():
     print("\n" + "─" * 50 + "\n")

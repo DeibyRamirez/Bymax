@@ -1,9 +1,71 @@
-baymax/
-│
-├── data/
-│   └── disease_dataset.csv        ← el dataset de Kaggle
-│
-├── baymax_agent.py                ← clase principal del agente
-├── analisis.py                    ← funciones pandas + scoring
-├── visualizacion.py               ← funciones matplotlib
-└── main.py                        ← loop de conversación, punto de entrada
+Baymax - Asistente medico orientativo
+
+Sistema de apoyo conversacional que realiza una evaluacion inicial de sintomas
+y estima diagnosticos probables con base en un dataset clinico.
+
+Arbol de archivos
+
+proyecto/
+|- app.py                          # servidor Flask (interfaz web)
+|- README
+|- data/
+|  |- Disease_symptom_and_patient_profile_dataset.csv
+|- templates/
+|  |- index.html                   # vista principal
+|- static/
+|  |- css/
+|     |- style.css                 # estilos del frontend
+|- src/
+|  |- __init__.py
+|  |- bymax_agente.py              # logica del agente Baymax
+|  |- datos.py                     # carga/limpieza y mapeo del dataset
+|  |- analisis.py                  # metricas y consultas analiticas
+|  |- visualizacion.py             # generacion de graficas en base64
+|- scripts/
+   |- main.py                      # modo consola
+   |- explorar.py                  # inspeccion rapida del dataset
+
+Funcionamiento del sistema
+
+1) Inicio de sesion y primer pregunta
+- El frontend llama a POST /iniciar.
+- app.py crea un session_id unico y una instancia de BaymaxAgent.
+- Se devuelve saludo + primera pregunta del flujo de sintomas.
+
+2) Conversacion guiada (Si/No)
+- El usuario responde cada sintoma desde la interfaz web.
+- El frontend envia POST /responder con: session_id, sintoma actual y valor.
+- El backend guarda la respuesta en el agente y recalcula candidatos.
+
+3) Razonamiento del agente
+- BaymaxAgent filtra el dataset por sintomas acumulados.
+- Si el filtro queda vacio, aplica una estrategia de respaldo usando el primer sintoma.
+- Calcula porcentaje de enfermedades candidatas (top 5).
+
+4) Decision
+- Si la confianza top >= 70% o ya se preguntaron todos los sintomas, diagnostica.
+- En caso contrario, selecciona el siguiente sintoma y continua preguntando.
+
+5) Resultado y visualizacion
+- Al diagnosticar, el backend retorna:
+  - texto orientativo de diagnostico,
+  - candidatos con probabilidad,
+  - 3 graficas en PNG codificadas en base64:
+    - diagnosticos posibles,
+    - frecuencia de sintomas,
+    - enfermedades mas frecuentes.
+- El frontend inserta las graficas en el panel derecho y desactiva botones.
+
+Modos de uso
+
+- Web (recomendado):
+  python app.py
+  Luego abrir http://127.0.0.1:5000/
+
+- Consola:
+  python scripts/main.py
+
+Notas
+
+- El sistema es orientativo y no reemplaza evaluacion medica profesional.
+- La memoria de sesiones se mantiene en memoria del proceso (diccionario en app.py).
