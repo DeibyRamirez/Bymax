@@ -1,0 +1,9 @@
+baymax/
+│
+├── data/
+│   └── disease_dataset.csv        ← el dataset de Kaggle
+│
+├── baymax_agent.py                ← clase principal del agente
+├── analisis.py                    ← funciones pandas + scoring
+├── visualizacion.py               ← funciones matplotlib
+└── main.py                        ← loop de conversación, punto de entrada
